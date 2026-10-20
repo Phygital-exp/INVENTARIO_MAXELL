@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#c8102e">
+    <title>Inventario Maxell</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="encabezado">
+    <div class="encabezado__contenido">
+        <div class="encabezado__titulo">
+            <span class="encabezado__logo" aria-hidden="true">📦</span>
+            <h1>Inventario Maxell</h1>
+        </div>
+        <div id="sesion" class="sesion oculto">
+            <div class="sesion__datos">
+                <p id="sesion-nombre" class="sesion__nombre"></p>
+                <p id="sesion-pdv" class="sesion__pdv"></p>
+            </div>
+            <button id="btn-salir" class="btn btn--texto" type="button">Salir</button>
+        </div>
+    </div>
+</header>
+
+<main class="app">
+    <!-- Indicador de pasos -->
+    <ol class="pasos" aria-label="Pasos">
+        <li class="pasos__item" data-paso="1"><span class="pasos__num">1</span><span class="pasos__txt">Identificación</span></li>
+        <li class="pasos__item" data-paso="2"><span class="pasos__num">2</span><span class="pasos__txt">Inventario</span></li>
+        <li class="pasos__item" data-paso="3"><span class="pasos__num">3</span><span class="pasos__txt">Envío</span></li>
+    </ol>
+
+    <!-- ===== PASO 1: IDENTIFICACIÓN ===== -->
+    <section id="paso-1" class="paso" aria-labelledby="titulo-paso-1">
+        <div class="tarjeta tarjeta--estrecha">
+            <h2 id="titulo-paso-1">¡Hola! Identifícate para empezar</h2>
+            <p class="texto-suave">Escribe tu número de cédula, solo números.</p>
+
+            <form id="form-cedula" class="form-cedula" novalidate>
+                <label for="cedula" class="etiqueta">Número de cédula</label>
+                <input id="cedula" class="campo" type="text" inputmode="numeric" pattern="[0-9]*"
+                       autocomplete="off" maxlength="15" placeholder="Ej: 1012345678" required>
+                <button id="btn-buscar" class="btn btn--primario btn--bloque" type="submit">Continuar</button>
+            </form>
+
+            <div id="mensaje-paso-1" aria-live="polite"></div>
+
+            <div id="confirmacion" class="confirmacion oculto" aria-live="polite">
+                <p class="confirmacion__pregunta">¿Eres <strong id="conf-nombre"></strong>?</p>
+                <div class="confirmacion__botones">
+                    <button id="btn-si" class="btn btn--exito btn--grande" type="button">Sí, soy yo</button>
+                    <button id="btn-no" class="btn btn--secundario btn--grande" type="button">No, no soy yo</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== PASO 2: INVENTARIO ===== -->
+    <section id="paso-2" class="paso oculto" aria-labelledby="titulo-paso-2">
+        <div class="cabecera-inventario">
+            <h2 id="titulo-paso-2">Registra la cantidad de cada producto</h2>
+            <p class="texto-suave">Escribe la cantidad y toca <strong>Guardar</strong>. Si no hay unidades, escribe <strong>0</strong>.</p>
+        </div>
+
+        <div id="aviso-completo" class="aviso aviso--exito oculto" role="status">
+            ✓ Ya diligenciaste todos los productos. Puedes corregir cantidades o enviar la encuesta.
+        </div>
+
+        <div class="herramientas">
+            <div class="contador">
+                <p id="contador-texto" class="contador__texto" aria-live="polite"></p>
+                <div class="barra" aria-hidden="true"><div id="contador-barra" class="barra__relleno"></div></div>
+            </div>
+
+            <div>
+                <p class="etiqueta" id="titulo-categorias">Categoría</p>
+                <div id="categorias" class="chips" role="group" aria-labelledby="titulo-categorias"></div>
+            </div>
+
+            <div class="herramientas__fila">
+                <label for="buscador" class="sr-only">Buscar producto por nombre, referencia o código de barras</label>
+                <input id="buscador" class="campo campo--buscar" type="search" autocomplete="off"
+                       placeholder="🔍 Buscar por nombre, referencia o código">
+                <label class="interruptor">
+                    <input id="solo-pendientes" type="checkbox">
+                    <span>Ver solo pendientes</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="lista-encabezado" aria-hidden="true">
+            <span>Producto</span><span>Cantidad</span><span>Acción</span>
+        </div>
+        <div id="lista-productos" class="lista" role="list"></div>
+
+        <div id="barra-enviar" class="barra-enviar">
+            <button id="btn-enviar" class="btn btn--primario btn--bloque btn--grande" type="button">Enviar encuesta</button>
+        </div>
+    </section>
+
+    <!-- ===== PASO 3: ENVÍO ===== -->
+    <section id="paso-3" class="paso oculto" aria-labelledby="titulo-paso-3">
+        <div class="tarjeta tarjeta--estrecha final">
+            <span class="final__icono" aria-hidden="true">🎉</span>
+            <h2 id="titulo-paso-3">¡Encuesta enviada!</h2>
+            <p id="final-resumen" class="texto-suave"></p>
+            <div class="final__botones">
+                <button id="btn-revisar" class="btn btn--secundario btn--bloque" type="button">Revisar o corregir cantidades</button>
+                <button id="btn-salir-final" class="btn btn--primario btn--bloque" type="button">Salir</button>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- Modal reutilizable -->
+<div id="modal" class="modal-fondo oculto">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+        <h3 id="modal-titulo" class="modal__titulo"></h3>
+        <div id="modal-cuerpo" class="modal__cuerpo"></div>
+        <div id="modal-botones" class="modal__botones"></div>
+    </div>
+</div>
+
+<!-- Avisos (toasts) -->
+<div id="toasts" class="toasts" aria-live="polite" aria-atomic="false"></div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
