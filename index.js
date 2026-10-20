@@ -31,6 +31,7 @@ const COLECCIONES = {
 const ZONA_HORARIA = "America/Bogota";
 const CANTIDAD_MAXIMA = 999999;
 const ESTADO_EN_PUNTO = "EN PUNTO";
+const PRODUCTO_ACTIVO = "ACTIVO";
 const CATEGORIA_POR_DEFECTO = "SIN CATEGORÍA";
 
 // Cuántos POST simultáneos se envían al enviar toda la encuesta
@@ -161,6 +162,8 @@ async function enParalelo(items, limite, fn) {
 }
 
 // ========== PRODUCTOS (con caché corta: el catálogo cambia poco) ==========
+// productos_demo_inv: { COD_BARRAS, REFERENCIA, DESCRIPCION, ESTADO, CATEGORIA, SUBCATEGORIA }
+// Solo se inventarían los productos ACTIVO (o sin ESTADO)
 const CACHE_PRODUCTOS_MS = 5 * 60 * 1000;
 let cacheProductos = { datos: null, expira: 0 };
 
@@ -170,13 +173,19 @@ async function obtenerProductos() {
     const crudos = await consultarColeccion(COLECCIONES.productos);
     const datos = crudos
         .filter(p => p._id && normalizarTexto(p.REFERENCIA))
+        .filter(p => !normalizarEstado(p.ESTADO) || normalizarEstado(p.ESTADO) === PRODUCTO_ACTIVO)
         .map(p => ({
             PRODUCTO_ID: String(p._id),
             REFERENCIA: normalizarTexto(p.REFERENCIA),
+            // Valor tal cual viene en la base (número), para guardarlo con el mismo tipo
+            REFERENCIA_ORIGINAL: p.REFERENCIA,
+            COD_BARRAS: normalizarTexto(p.COD_BARRAS),
             DESCRIPCION: normalizarTexto(p.DESCRIPCION),
             CATEGORIA: normalizarTexto(p.CATEGORIA).toUpperCase() || CATEGORIA_POR_DEFECTO,
+            SUBCATEGORIA: normalizarTexto(p.SUBCATEGORIA),
         }))
         .sort((a, b) => a.CATEGORIA.localeCompare(b.CATEGORIA, "es")
+            || a.SUBCATEGORIA.localeCompare(b.SUBCATEGORIA, "es")
             || a.DESCRIPCION.localeCompare(b.DESCRIPCION, "es"));
 
     cacheProductos = { datos, expira: Date.now() + CACHE_PRODUCTOS_MS };
@@ -248,7 +257,7 @@ function nuevoRegistro(ingreso, producto, cantidad) {
         TELEFONO: ingreso.TELEFONO ?? null,
         PDV: ingreso.PDV ?? null,
         SAP: ingreso.SAP ?? null,
-        REFERENCIA: producto.REFERENCIA,
+        REFERENCIA: producto.REFERENCIA_ORIGINAL,
         DESCRIPCION: producto.DESCRIPCION,
         CANTIDAD: cantidad,
         CATEGORIA: producto.CATEGORIA,
@@ -261,7 +270,7 @@ async function construirVista(ingreso, docs) {
     const catalogo = await obtenerProductos();
     const porReferencia = registrosPorReferencia(docs);
 
-    const productos = catalogo.map(p => {
+    const productos = catalogo.map(({ REFERENCIA_ORIGINAL, ...p }) => {
         const doc = porReferencia.get(p.REFERENCIA);
         return {
             ...p,
